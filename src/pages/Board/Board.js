@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+
 import useDataFetching from "../../hooks/useDataFetching";
 
 import Lane from "../../components/Lane/Lane";
@@ -11,19 +13,50 @@ const lanes = [
 ];
 
 function Board() {
-  const [loading, error, tasks] = useDataFetching(
+  const [tasks, setTasks] = useState([]);
+
+  const [loading, error, data] = useDataFetching(
     "https://my-json-server.typicode.com/PacktPublishing/React-Projects-Second-Edition/tasks"
   );
+
+  useEffect(() => {
+    setTasks(data);
+  }, [data]);
+
+  function onDragStart(e, id) {
+    e.dataTransfer.setData("id", id);
+  }
+
+  function onDragOver(e) {
+    e.preventDefault();
+  }
+
+  function onDrop(e, laneId) {
+    const id = e.dataTransfer.getData("id");
+
+    const updatedTasks = tasks.filter((task) => {
+      if (task.id.toString() === id) {
+        task.lane = laneId;
+      }
+      return task;
+    });
+
+    setTasks(updatedTasks);
+  }
 
   return (
     <div className="Board-wrapper">
       {lanes.map((lane) => (
         <Lane
           key={lane.id}
+          laneId={lane.id}
           title={lane.title}
           loading={loading}
           error={error}
           tasks={tasks.filter((task) => task.lane === lane.id)}
+          onDragStart={onDragStart}
+          onDragOver={onDragOver}
+          onDrop={onDrop}
         />
       ))}
     </div>
